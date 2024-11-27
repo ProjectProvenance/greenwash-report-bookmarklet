@@ -6,48 +6,80 @@ if (window.greenwashBookmarklet) return;
 window.greenwashBookmarklet = true
 
 const terms = [
-"create positive planetary change",
-"Eco-Chef",
-"live more sustainably",
-"minimize your impact on the environment",
-"evidence-based blueprint",
-"and the planet",
-"greener way of eating",
-"globally agreed scientific targets",
-"tackling climate change",
-"tackle climate change",
-"reducing food waste",
-"reduce food waste",
-"sustainable food",
-"Eat to Save the Planet",
-"climate-conscious way",
-"planet-friendly",
+    "create positive planetary change",
+    "Eco-Chef",
+    "live more sustainably",
+    "minimize your impact on the environment",
+    "evidence-based blueprint",
+    "greener way of eating",
+    "globally agreed scientific targets",
+    "tackling climate change",
+    "tackle climate change",
+    "reducing food waste",
+    "reduce food waste",
+    "sustainable food",
+    "Eat to Save the Planet",
+    "climate-conscious way",
+    "planet-friendly",
 ]
 
+const regex = new RegExp(terms.map(term => `(${escapeRegExp(term)})`).join('|'), 'gi')
+
 const documentHTML = document.documentElement.outerHTML
-const regex = new RegExp(terms.join('|'), 'gi')
 const matches = documentHTML.matchAll(regex)
-console.log('matches', matches)
-
 const flatMatches = Array.from(matches).map((item) => item[0])
-console.log('flatMatches', flatMatches)
-
 const uniqueMatches = Array.from(new Set(flatMatches))
-console.log('uniqueMatches', uniqueMatches)
 
 const len = uniqueMatches.length
 if (len > 0) {
-  const result = uniqueMatches.join('\n')
-  alert(`${len} matches found: ${result}`)
+    const result = uniqueMatches.join('\n')
+    alert(`${len} matches found: ${result}`)
 } else {
-  alert('No matches found!')
+    alert('No matches found!')
 }
 
-markedText = documentHTML
+// Escape special regex characters
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
-matches.forEach(match => {
-  let regex = new RegExp(match.name, 'gi')
-  markedText = markedText.replace(regex, `<mark>$&</mark>`)
-})
+// Function to walk and modify text nodes
+function wrapMatchingTextNodes() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
 
-document.documentElement.outerHTML = markedText
+    const nodesToReplace = []
+    let node
+
+    // First, collect nodes to replace to avoid modifying the tree during traversal
+    while (node = walker.nextNode()) {
+        if (regex.test(node.textContent)) {
+            nodesToReplace.push(node)
+        }
+    }
+
+    // Now replace the collected nodes
+    nodesToReplace.forEach(node => {
+        const text = node.textContent
+        const fragment = document.createDocumentFragment()
+        const parts = text.split(regex)
+
+        parts.forEach(part => {
+            if (regex.test(part)) {
+                // Matched phrase
+                const wrapper = document.createElement('mark')
+                wrapper.classList.add('match')
+                wrapper.textContent = part
+                fragment.appendChild(wrapper)
+            } else if (part) {
+                // Non-matched text - keep as text node
+                fragment.appendChild(document.createTextNode(part))
+            }
+        })
+
+        // Replace the original node with the fragment
+        node.parentNode.replaceChild(fragment, node)
+    })
+}
+
+// Call the function to wrap matching text nodes
+wrapMatchingTextNodes()
