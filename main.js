@@ -24,21 +24,16 @@ const terms = [
 "planet-friendly",
 ]
 
-// Rough outline:
-// - [x] if bookmarklet already used, stop
-// - [ ] for each term
-// - [ ] find term
-// - [ ] if found, add to classList
 const documentHTML = document.documentElement.outerHTML
 const regex = new RegExp(terms.join('|'), 'gi')
 const matches = documentHTML.matchAll(regex)
-// console.log('matches', matches)
+console.log('matches', matches)
 
-// const flatMatches = Array.from(matches).map((item) => item[0])
-// console.log('flatMatches', flatMatches)
+const flatMatches = Array.from(matches).map((item) => item[0])
+console.log('flatMatches', flatMatches)
 
-// const uniqueMatches = Array.from(new Set(flatMatches))
-// console.log('uniqueMatches', uniqueMatches)
+const uniqueMatches = Array.from(new Set(flatMatches))
+console.log('uniqueMatches', uniqueMatches)
 
 const len = uniqueMatches.length
 if (len > 0) {
