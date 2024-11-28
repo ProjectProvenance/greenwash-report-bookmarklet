@@ -6,14 +6,29 @@
     // Add CSS styles
     const styles = `
         .match {
-            background-color: #ffd7d7;
             padding: 2px 0;
             border-radius: 2px;
             cursor: help;
         }
 
         .match:hover {
-            background-color: #ffbdbd;
+            filter: brightness(0.95);
+        }
+
+        .match.risk-clear {
+            background-color: #E8F5E9;  /* Light green */
+        }
+
+        .match.risk-red {
+            background-color: #ffd7d7;  /* Light red */
+        }
+
+        .match.risk-ambiguous {
+            background-color: #FFE4B5;  /* Light orange */
+        }
+
+        .match.risk-green {
+            background-color: #E8F5E9;  /* Light green */
         }
 
         .greenwash-tooltip {
@@ -38,7 +53,7 @@
 
         .tooltip-header {
             font-weight: bold;
-            color: #d32f2f;
+            font-size: 20px;
             margin-bottom: 8px;
         }
 
@@ -181,6 +196,13 @@
                         c.claim.toLowerCase() === part.toLowerCase()
                     );
                     if (claim) {
+                        // Add risk level class
+                        const riskLevel = claim.risk_level?.toLowerCase() || 'unknown';
+                        const riskClass = riskLevel === 'clear' ? 'clear' : 
+                                         riskLevel === 'ambiguous' ? 'ambiguous' : 
+                                         riskLevel;
+                        wrapper.classList.add(`risk-${riskClass}`);
+                        
                         wrapper.dataset.claim = JSON.stringify(claim);
                         wrapper.addEventListener('mousemove', showTooltip);
                         wrapper.addEventListener('mouseleave', hideTooltip);
