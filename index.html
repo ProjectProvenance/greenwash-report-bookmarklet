@@ -7,7 +7,7 @@
 </head>
 <body>
   To install this bookmarklet, simply bookmark this link below (you may drag & drop it into your browser bookmarks bar):
-  <a href="javascript:var link = document.createElement('link');link.rel = 'stylesheet';link.href = 'style.css';document.head.appendChild(link);var script = document.createElement('script');script.type = 'text/javascript';script.src = 'main.js';document.body.appendChild(script);">bookmarklet</a>
+  <a href="javascript:(function(){if(window.greenwashBookmarklet)return;var link=document.createElement('link');link.rel='stylesheet';link.href='style.css';document.head.appendChild(link);var apiScript=document.createElement('script');apiScript.type='text/javascript';apiScript.src='api.js';var mainScript=document.createElement('script');mainScript.type='text/javascript';mainScript.src='main.js';apiScript.onload=function(){document.body.appendChild(mainScript);};document.body.appendChild(apiScript);})();">Analyze Greenwashing</a>
   To use it, simply navigate to the bookmark.
 </body>
 </html>
