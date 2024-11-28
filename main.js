@@ -3,6 +3,105 @@
     if (window.greenwashBookmarklet) return;
     window.greenwashBookmarklet = true;
 
+    // Add CSS styles
+    const styles = `
+        .match {
+            background-color: #ffd7d7;
+            padding: 2px 0;
+            border-radius: 2px;
+            cursor: help;
+        }
+
+        .match:hover {
+            background-color: #ffbdbd;
+        }
+
+        .greenwash-tooltip {
+            position: fixed;
+            z-index: 100000;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 12px;
+            max-width: 300px;
+            min-width: 200px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            pointer-events: none;
+            border: 1px solid #ddd;
+            display: none;
+        }
+
+        .tooltip-content {
+            position: relative;
+        }
+
+        .tooltip-header {
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 8px;
+        }
+
+        .tooltip-body {
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .risk-level {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .risk-level.red {
+            color: #d32f2f;
+        }
+
+        .risk-level.amber {
+            color: #ff9800;
+        }
+
+        .risk-level.green {
+            color: #4caf50;
+        }
+
+        .topic, .reason, .scheme {
+            margin-top: 4px;
+        }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+
+    // Create tooltip container once
+    const tooltip = document.createElement('div');
+    tooltip.className = 'greenwash-tooltip';
+    document.body.appendChild(tooltip);
+
+    function updateTooltipPosition(event) {
+        const padding = 15;
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Start with position to the right and below cursor
+        let left = event.clientX + padding;
+        let top = event.clientY + padding;
+
+        // Adjust if tooltip would go off right edge
+        if (left + tooltipRect.width > viewportWidth) {
+            left = event.clientX - tooltipRect.width - padding;
+        }
+
+        // Adjust if tooltip would go off bottom edge
+        if (top + tooltipRect.height > viewportHeight) {
+            top = event.clientY - tooltipRect.height - padding;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    }
+
     async function fetchClaims() {
         const currentUrl = window.location.href;
         const apiUrl = new URL('https://provenance-a-paul-hack--gy2wd1.herokuapp.com/v1/claims');
@@ -41,54 +140,12 @@
         if (terms.length === 0) return;
 
         const regex = new RegExp(terms.map(term => `(${escapeRegExp(term)})`).join('|'), 'gi');
-        
-        // Highlight matching terms
-        wrapMatchingTextNodes(regex);
 
-        // Create results popup
-        const popup = document.createElement('div');
-        popup.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 10000;
-            font-family: Arial, sans-serif;
-        `;
+        // Highlight matching terms and add hover functionality
+        wrapMatchingTextNodes(regex, claims);
 
-        popup.innerHTML = `
-            <h2 style="margin-top: 0; color: #d32f2f;">Greenwashing Claims Detected</h2>
-            <p>Found ${claims.length} potential greenwashing claims:</p>
-            ${claims.map(claim => `
-                <div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                    <div style="font-weight: bold; color: #d32f2f;">"${claim.claim}"</div>
-                    <div style="font-size: 0.9em; color: #666;">
-                        Risk Level: ${claim.risk_level || 'Unknown'}<br>
-                        Topic: ${claim.topic || 'Unknown'}<br>
-                        ${claim.reason ? `<div style="margin-top: 5px;">Reason: ${claim.reason}</div>` : ''}
-                        ${claim.scheme ? `<div style="margin-top: 5px;">Scheme: ${claim.scheme.name}</div>` : ''}
-                    </div>
-                </div>
-            `).join('')}
-            <button onclick="this.parentElement.remove()" style="
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: none;
-                border: none;
-                font-size: 20px;
-                cursor: pointer;
-                color: #666;
-            ">×</button>
-        `;
-
-        document.body.appendChild(popup);
+        // Show initial summary
+        alert(`Found ${claims.length} potential greenwashing claims. Hover over highlighted text to see details.`);
     }
 
     // Escape special regex characters
@@ -97,7 +154,7 @@
     }
 
     // Function to wrap matching text nodes
-    function wrapMatchingTextNodes(regex) {
+    function wrapMatchingTextNodes(regex, claims) {
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         const nodesToReplace = [];
         let node;
@@ -118,6 +175,17 @@
                     const wrapper = document.createElement('mark');
                     wrapper.classList.add('match');
                     wrapper.textContent = part;
+                    
+                    // Find matching claim - case insensitive matching
+                    const claim = claims.find(c => 
+                        c.claim.toLowerCase() === part.toLowerCase()
+                    );
+                    if (claim) {
+                        wrapper.dataset.claim = JSON.stringify(claim);
+                        wrapper.addEventListener('mousemove', showTooltip);
+                        wrapper.addEventListener('mouseleave', hideTooltip);
+                    }
+                    
                     fragment.appendChild(wrapper);
                 } else if (part) {
                     fragment.appendChild(document.createTextNode(part));
@@ -126,6 +194,31 @@
 
             node.parentNode.replaceChild(fragment, node);
         });
+    }
+
+    function showTooltip(event) {
+        const claim = JSON.parse(event.target.dataset.claim);
+        
+        tooltip.innerHTML = `
+            <div class="tooltip-content">
+                <div class="tooltip-header">${claim.claim}</div>
+                <div class="tooltip-body">
+                    <div class="risk-level ${claim.risk_level?.toLowerCase()}">
+                        Risk Level: ${claim.risk_level || 'Unknown'}
+                    </div>
+                    <div class="topic">Topic: ${claim.topic || 'Unknown'}</div>
+                    ${claim.reason ? `<div class="reason">Reason: ${claim.reason}</div>` : ''}
+                    ${claim.scheme ? `<div class="scheme">Scheme: ${claim.scheme.name}</div>` : ''}
+                </div>
+            </div>
+        `;
+
+        tooltip.style.display = 'block';
+        updateTooltipPosition(event);
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
     }
 
     // Start the analysis
