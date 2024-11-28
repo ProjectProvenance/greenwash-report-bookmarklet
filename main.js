@@ -228,7 +228,7 @@
                     <div class="risk-level ${claim.risk_level?.toLowerCase()}">
                         Risk Level: ${claim.risk_level || 'Unknown'}
                     </div>
-                    <div class="topic">Topic: ${claim.topic || 'Unknown'}</div>
+                    ${claim.topic && claim.topic !== 'NaN' ? `<div class="topic">Topic: ${claim.topic}</div>` : ''}
                     ${claim.reason ? `<div class="reason">Reason: ${claim.reason}</div>` : ''}
                     ${claim.scheme ? `<div class="scheme">Scheme: ${claim.scheme.name}</div>` : ''}
                 </div>
