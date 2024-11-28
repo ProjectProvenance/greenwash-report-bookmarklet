@@ -184,8 +184,9 @@
 
     const len = uniqueMatches.length
     if (len > 0) {
-        const result = uniqueMatches.join('\n')
-        alert(`${len} matches found: ${result}`)
+        // const result = uniqueMatches.join('\n')
+        // alert(`${len} matches found: ${result}`)
+        alert(`${len} matches found!`)
     } else {
         alert('No matches found!')
     }
