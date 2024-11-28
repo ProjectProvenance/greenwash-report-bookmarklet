@@ -21,6 +21,15 @@ const terms = [
     "Eat to Save the Planet",
     "climate-conscious way",
     "planet-friendly",
+    "eco-friendly",
+    // from https://www.ocado.com/products/naked-sprout-unbleached-bamboo-toilet-roll-603420011
+    "UK's most sustainable",
+    "50% smaller climate footprint than other eco brands",
+    "Manufactured using 100% renewable energy",
+    "HIGHEST RATED B Corp",
+    "free from harsh chemicals and plastic",
+    "Other manufacturers use bleaching agents and harsh chemicals",
+    "FSC Certified",
 ]
 
 const regex = new RegExp(terms.map(term => `(${escapeRegExp(term)})`).join('|'), 'gi')
